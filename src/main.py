@@ -16,10 +16,10 @@ MAX_PLAYER_SPEED = 30
 MAX_ENEMY_SPEED = 20
 MAX_ENEMYS = 5
 
-MAX_VIEW_PLAYER = 150
+MAX_VIEW_PLAYER = 180
 MAX_VIEW_ENEMY = 100
 
-LIFE_ENEMY = 6
+LIFE_ENEMY = 4
 LIFE_PLAYER = 10
 
 RATE_ENEMY = 40
@@ -28,6 +28,8 @@ RATE_PLAYER = 70
 DAMAGE_PLAYER = 1
 DAMAGE_ENEMY = 1
 
+TIME_NEXT_ATTACK = 1
+TIME_NEXT_ATTACK_PLAYER = 0.8
 
 GAME_STATUS = 'RUN'
 # Audio TRACKS; easy to implement. Get TRACKS at:
@@ -47,6 +49,7 @@ def main():
     global behavior
     global target
     global LEVEL
+    global action
 
     points = 0   # NOQA
     enemys = []
@@ -57,6 +60,7 @@ def main():
     screen = pygame.display.set_mode((800, 700))
     pygame.display.set_caption("Majesty 0.1")
     images = loadImages()
+    pygame.time.set_timer(USEREVENT + 1, 2000)
 
     # The game world.
     world = World(images, LEVEL['level'])
@@ -79,7 +83,8 @@ def main():
     backgroundMusic()
 
     # Default behavior.
-    behavior = 'wander'
+    behavior = 'stop'
+    action = 'run'
     draw_vectors = False
 
     level_change = False
@@ -89,6 +94,8 @@ def main():
         for event in pygame.event.get():
             if event.type == QUIT:
                 exit()
+            if event.type == USEREVENT + 1:
+                restoreLifePlayer()
             elif event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
                     exit()
@@ -98,8 +105,8 @@ def main():
                     draw_vectors = not draw_vectors
                     print "Toggled:", draw_vectors
                     # Magic keys to change in-game behavior.
-                elif event.key == K_w:
-                    behavior = 'wander'
+                #elif event.key == K_w:
+                #    behavior = 'wander'
                 # Special case to close off left-most ramp
                 # in hard map.
                 #elif event.key == K_x:
@@ -107,17 +114,17 @@ def main():
                 #        LEVEL['level'][1][3] = 'water block'
                 #    else:
                 #        LEVEL['level'][1][3] = 'ramp block'
-
-                elif event.key == K_s:
-                    behavior = 'seek'
-                elif event.key == K_a:
-                    behavior = 'a*'
-                elif event.key == K_f:
-                    behavior = 'flee'
-                elif event.key == K_v:
-                    behavior = 'avoid'
-                elif event.key == K_r:
-                    behavior = 'arrive'
+                #
+                #elif event.key == K_s:
+                #    behavior = 'seek'
+                #elif event.key == K_a:
+                #    behavior = 'a*'
+                #elif event.key == K_f:
+                #    behavior = 'flee'
+                #elif event.key == K_v:
+                #    behavior = 'avoid'
+                #elif event.key == K_r:
+                #    behavior = 'arrive'
                 #elif event.key == K_1:
                 #    LEVEL = levels.EASY
                 #    level_change = True
@@ -189,6 +196,13 @@ def main():
         pygame.display.update()
 
 
+def restoreLifePlayer():
+    global behavior, player, action
+    if behavior == 'stop' and action == 'stop' and player.life < LIFE_PLAYER:
+        player.life += 1
+        print 'Restore Life'
+
+
 def isDead(target):
     global enemys
 
@@ -205,40 +219,59 @@ def getDistance(target1, target2):
     return distance_to_target
 
 
-def attack(target1, target2):
+def attack(target1, target2, time_passed_seconds):
+    '''
+        the target1 try attack target2 using percent rate_attack
+        in last_attack time (1 second) and verify if target's is dead
+    '''
     global target, points, GAME_STATUS
+    target1.next_attack -= time_passed_seconds
+    damage = False
 
-    atk = random.randint(0, 100)
-    if target1.rate_attack < atk:
-        target2.life -= target1.damage
-        print 'DAMAGE'
-    else:
-        print 'MISS'
+    if target1.next_attack <= 0:
+        atk = random.randint(0, 100)
+        if target1.rate_attack > atk:
+            target2.life -= target1.damage
+            damage = True
+        if target1.isNonPlayerCharacter:
+            target1.next_attack = TIME_NEXT_ATTACK
+        else:
+            # is a Player
+            target1.next_attack = TIME_NEXT_ATTACK_PLAYER
+
+        if target1.isNonPlayerCharacter:
+            if damage:
+                print 'NPC cause damage in player'
+            else:
+                print 'NPC miss'
+        else:
+            if damage:
+                print 'Player cause damage in NPC'
+            else:
+                print 'Player miss'
 
     if isDead(target2):
         if target2.isNonPlayerCharacter:
             target = None
             enemys.remove(target2)
             points += 1
+            print 'Enemy elimined'
         else:
             GAME_STATUS = 'GAME OVER'  # NOQA
 
 
 ## manage status for player and enemies
 def manageStatus(time_passed_seconds):
-    global target, tiles, behavior
+    global target, tiles, behavior, world, action
 
     #enemys
-    #for i in enemys:
-    #    print i.position
-
     # This is where the magic happens.
     for i in enemys:
         distance = getDistance(i, player)
         if distance <= MAX_VIEW_ENEMY:
-            if distance <= 10:
+            if distance <= 25:
                 i.behavior = 'attack'
-                attack(i, player)
+                attack(i, player, time_passed_seconds)
             else:
                 i.behavior = 'seek'
         else:
@@ -249,17 +282,21 @@ def manageStatus(time_passed_seconds):
     target = verify_target()
     if target:
         distance = getDistance(player, target)
-        if distance <= 10:
-            behavior = 'attack'
-            attack(player, target)
-        elif player.life < 3:
-            behavior = 'flee'
+        if player.life < 4:
+            action = 'flee'
+            if not player.can_move:
+                action = 'run'
+        elif distance <= 30:
+            action = 'attack'
         else:
-            behavior = 'a*'
-        executeAIBehavior(behavior, player, target, time_passed_seconds)
+            action = 'hunter'
     else:
-        behavior = 'wander'
-        executeAIBehavior(behavior, player, player, time_passed_seconds)
+        action = 'stop'
+        # Not target
+        if player.life > 9:
+            action = 'run'
+
+    execAction(time_passed_seconds)
 
     if draw_vectors is True and target:
         if behavior == 'a*':
@@ -270,6 +307,32 @@ def manageStatus(time_passed_seconds):
             drawLinePixel(line, tiles)
 
 
+def execAction(time_passed_seconds):
+    global action, target
+    targetBeh = player
+
+    if action == 'hunter':
+        ''' run to target '''
+        behavior = 'a*'
+        targetBeh = target
+
+    elif action == 'attack':
+        attack(player, target, time_passed_seconds)
+        behavior = 'stop'
+
+    elif action == 'stop':
+        behavior = 'stop'
+
+    elif action == 'run':
+        behavior = 'wander'
+
+    elif action == 'flee':
+        behavior = 'flee'
+        targetBeh = target
+
+    executeAIBehavior(behavior, player, targetBeh, time_passed_seconds)
+
+
 def verify_target():
     global target
 
@@ -278,10 +341,8 @@ def verify_target():
         #[x dist. to target, y dist. to target]
         distance_to_target = getDistance(target, player)
         if distance_to_target < MAX_VIEW_PLAYER:
-            print 'IN VIEW'
             return target
         else:
-            print 'NOT IN VIEW - REMOVED'
             target = None
 
     if not target:
@@ -296,8 +357,13 @@ def verify_target():
 
 def addEnemy():
     if enemys.__len__() < MAX_ENEMYS:
-        enemy_pos = [random.randint(100, 650), random.randint(100, 650)]
-        # np.array(LEVEL['enemy'])
+        pos_level = np.array(LEVEL['enemy']).__len__()
+        try:
+            position = LEVEL['enemy'][random.randint(0, pos_level)]
+            enemy_pos = np.array(position)
+        except IndexError:
+            enemy_pos = np.array(LEVEL['enemy'][0])
+
         enemys.append(Agent(world, 'wander', images["girl"], enemy_pos,
                       MAX_ENEMY_SPEED, LIFE_ENEMY, RATE_ENEMY,
                       DAMAGE_ENEMY, is_npc=True))
@@ -327,6 +393,7 @@ def executeAIBehavior(behavior, enemy, player, time_passed_seconds):
 
     elif behavior == 'arrive':
         ai.arrive(enemy, player.position, time_passed_seconds)
+
     elif behavior == 'stop':
         pass
 
@@ -437,7 +504,7 @@ def backgroundMusic():
 
 
 def refreshBlit():
-    global screen, enemys, player, tiles, world, points
+    global screen, enemys, player, tiles, world, points, action
 
     tiles = world.renderWorld()
     screen.fill((0, 0, 0))
@@ -448,7 +515,7 @@ def refreshBlit():
     text = font.render(LEVEL['name'], True, (255, 255, 255))
     tiles.blit(text, (0, 0))
 
-    text = font.render(behavior.upper(), True, (255, 255, 255))
+    text = font.render(action.upper(), True, (255, 255, 255))
     tiles.blit(text, (400, 0))
 
     text = font.render(str(points), False, (0, 0, 0))
@@ -461,6 +528,15 @@ def refreshBlit():
         i.blitOn(tiles)
     player.blitOn(tiles)
 
+'''
+def screen(GAME_STATUS):
+    if GAME_STATUS == 'menu':
+        menuScreen()
+    elif GAME_STATUS == 'game':
+        gameScreen()
+    elif GAME_STATUS == 'gameover':
+        gameOverScreen()
+'''
 
 if __name__ == '__main__':
     main()

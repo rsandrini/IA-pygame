@@ -25,6 +25,8 @@ class Agent():
         self.life = life
         self.rate_attack = rate_attack
         self.damage = damage
+        self.next_attack = 0
+        self.can_move = True
 
     def update(self, acceleration, time_passed):
         self._updateVelocity(acceleration, time_passed)
@@ -37,13 +39,14 @@ class Agent():
 
         if self._canMove(position_update):
             self.position = position_update
-
+            self.can_move = True
         else:
             # If we can't update, we hit a boundary.
             # Since we hit a boundary, null the
             # velocity/lastAcceleration for instant stop.
             self.velocity[0] = 0.
             self.velocity[1] = 0.
+            self.can_move = False
 
 
     def _updateVelocity(self, acceleration, time_passed):

@@ -77,7 +77,7 @@ EASY = {
     ],
 
     'player': [80, 400],
-    'enemy': [300, 200]
+    'enemy': [[50, 100], [650, 100], [50, 600], [650, 600]]
 }
 
 # A hard level, that is, has many obstacles.
@@ -240,4 +240,3 @@ MEDIUM = {
     'player': [80, 400],
     'enemy': [300, 200]
 }
-
