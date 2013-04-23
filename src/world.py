@@ -3,14 +3,14 @@ import pygame
 class World():
 
     # The total width and height of each tile in pixels.
-    TILE_WIDTH = 51
-    TILE_HEIGHT = 81
-    TILE_OFFSET = 45
+    TILE_WIDTH = 101
+    TILE_HEIGHT = 171
+    TILE_OFFSET = 90
 
     # The amount of pixels shifted before the actual tile begins.
-    TILE_VISIBLE_SHIFT = 25
-    TILE_VISIBLE_HEIGHT = 65
-    TILE_VISIBLE_WIDTH = 51
+    TILE_VISIBLE_SHIFT = 50
+    TILE_VISIBLE_HEIGHT = 130
+    TILE_VISIBLE_WIDTH = 101
 
     # A giant list representing the world model.
     # We want it such that in level[x][y], the x will select the column and

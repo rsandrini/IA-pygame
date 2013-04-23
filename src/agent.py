@@ -7,11 +7,12 @@ class Agent():
     Represents an Agent in the game world.
     """
 
-    def __init__(self, world, image, position, max_speed,
-                 is_npc = False):
+    def __init__(self, world, behavior, image, position, max_speed,
+                 life, rate_attack, damage, is_npc = False):
 
         self.reference = (50, 138)
         self.world = world
+        self.behavior = behavior
         self.image = image
         self.position = position
 
@@ -21,7 +22,9 @@ class Agent():
 
         self.lastAcceleration = np.array([0., 0.])
         self.isNonPlayerCharacter = is_npc
-
+        self.life = life
+        self.rate_attack = rate_attack
+        self.damage = damage
 
     def update(self, acceleration, time_passed):
         self._updateVelocity(acceleration, time_passed)
@@ -41,7 +44,7 @@ class Agent():
             # velocity/lastAcceleration for instant stop.
             self.velocity[0] = 0.
             self.velocity[1] = 0.
-            
+
 
     def _updateVelocity(self, acceleration, time_passed):
 

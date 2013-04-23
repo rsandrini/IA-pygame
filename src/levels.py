@@ -6,13 +6,13 @@ EASY = {
     'level': [
 
         # Column 1
-        ['stone block small',
-         'stone block small',
-         'stone block small',
-         'stone block small',
-         'stone block small',
-         'stone block small',
-         'stone block small',
+        ['stone block',
+         'stone block',
+         'stone block',
+         'stone block',
+         'stone block',
+         'stone block',
+         'stone block',
          ],
 
         # Column 2
