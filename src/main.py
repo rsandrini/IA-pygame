@@ -109,8 +109,9 @@ def loading():
 
 
 def gameRun():
-    global clock, player, action, world, points, tiles
+    global clock, player, action, world, points, tiles, enemys
     global level_change, draw_vectors, target, apath, behavior
+    global MAX_VIEW_PLAYER, MAX_VIEW_ENEMY, screen
 
     # The main game event loop.
     while True:
@@ -128,27 +129,6 @@ def gameRun():
                     draw_vectors = not draw_vectors
                 elif event.key == K_i:
                     addEnemy()
-        '''
-        # If level change was indicated.
-        #if level_change:
-        #    world = World(images, LEVEL['level'])
-
-        #    player_pos = np.array(LEVEL['player'])
-        #    player = Agent(world, images["boy"], player_pos, MAX_PLAYER_SPEED,
-        #                   LIFE_PLAYER, RATE_PLAYER, DAMAGE_PLAYER)
-
-            #enemy_pos = np.array(LEVEL['enemy'])
-        #    addEnemy()
-            #enemys.append(Agent(world, images["girl"], enemy_pos,
-            #              MAX_ENEMY_SPEED, LIFE_ENEMY, RATE_ENEMY,
-            #              DAMAGE_ENEMY, is_npc=True))
-
-         #   level_change = False
-         #   pass
-
-        # Handle movement.
-        #pressed_keys = pygame.key.get_pressed()
-        '''
         # Compute the vector indicating the acceleration that the
         # player will experience.
         acceleration = np.array([0, 0])
@@ -168,7 +148,7 @@ def gameRun():
         if enemys.__len__() <= 0:
             addEnemy()
 
-        if draw_vectors is True and target:
+        if draw_vectors and target:
             if behavior == 'a*':
                 drawLineTile(apath.path, tiles)
             else:
@@ -178,6 +158,19 @@ def gameRun():
 
         # Intermediate buffer to screen.
         screen.blit(tiles, (0, 0))
+
+        if draw_vectors:
+            #Draw vision circle in player
+            r = int(MAX_VIEW_PLAYER)
+            pos = (int(player.position[0]), int(player.position[1]))
+            cor = (255, 255, 255)
+            pygame.draw.circle(screen, cor, pos, r, 1)
+
+            #Draw vision circle in enemys
+            p = int(MAX_VIEW_ENEMY)
+            for i in enemys:
+                pygame.draw.circle(screen, cor, (int(i.position[0]),
+                                                 int(i.position[1])), p, 1)
 
         # Update the display, and loop again!
         pygame.display.update()
