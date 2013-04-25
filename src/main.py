@@ -8,6 +8,8 @@ import kinematics as ai
 from agent import Agent
 from world import World
 from pygame.locals import *  # NOQA
+from menu import *  # NOQA
+
 
 # Set these constants before starting the game.
 FPS = 20
@@ -31,7 +33,7 @@ DAMAGE_ENEMY = 1
 TIME_NEXT_ATTACK = 1
 TIME_NEXT_ATTACK_PLAYER = 0.8
 
-GAME_STATUS = 'RUN'
+GAME_STATE = 'menu'
 # Audio TRACKS; easy to implement. Get TRACKS at:
 # http://www.nosoapradio.us/
 TRACKS = [
@@ -50,17 +52,44 @@ def main():
     global target
     global LEVEL
     global action
+    global world
+    global points
+    global apath
 
-    points = 0   # NOQA
-    enemys = []
     showDialog = False  # NOQA
-    target = None
     # Startup code
     pygame.init()
     screen = pygame.display.set_mode((800, 700))
     pygame.display.set_caption("Majesty 0.1")
     images = loadImages()
     pygame.time.set_timer(USEREVENT + 1, 2000)
+
+    level_change = False  # NOQA
+
+    # The main game event loop.
+    while True:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                exit()
+            elif event.type == KEYDOWN:
+                if event.key == K_ESCAPE:
+                    exit()
+
+        screenGame(GAME_STATE)
+
+
+def loading():
+    global clock, player, behavior, action, world
+    global draw_vectors, level_change
+    global enemys, target, points
+
+    points = 0   # NOQA
+    enemys = []
+    target = None
+    # Default behavior.
+    behavior = 'stop'
+    action = 'run'
+    draw_vectors = True
 
     # The game world.
     world = World(images, LEVEL['level'])
@@ -73,21 +102,15 @@ def main():
     player = Agent(world, 'wander', images["boy"], player_pos,
                    MAX_PLAYER_SPEED, LIFE_PLAYER, RATE_PLAYER, DAMAGE_PLAYER)
 
-    #enemy_pos = np.array(LEVEL['enemy'])
     addEnemy()
-    #enemys.append(Agent(world, 'wander', images["girl"], enemy_pos,
-    #              MAX_ENEMY_SPEED, LIFE_ENEMY, RATE_ENEMY, DAMAGE_ENEMY,
-    #              is_npc=True))
 
     # Initially, background music is playing.
     backgroundMusic()
 
-    # Default behavior.
-    behavior = 'stop'
-    action = 'run'
-    draw_vectors = False
 
-    level_change = False
+def gameRun():
+    global clock, player, action, world, points, tiles
+    global level_change, draw_vectors, target, apath, behavior
 
     # The main game event loop.
     while True:
@@ -103,77 +126,32 @@ def main():
                     backgroundMusic()
                 elif event.key == K_d:
                     draw_vectors = not draw_vectors
-                    print "Toggled:", draw_vectors
-                    # Magic keys to change in-game behavior.
-                #elif event.key == K_w:
-                #    behavior = 'wander'
-                # Special case to close off left-most ramp
-                # in hard map.
-                #elif event.key == K_x:
-                #    if LEVEL['level'][1][3] == 'ramp block':
-                #        LEVEL['level'][1][3] = 'water block'
-                #    else:
-                #        LEVEL['level'][1][3] = 'ramp block'
-                #
-                #elif event.key == K_s:
-                #    behavior = 'seek'
-                #elif event.key == K_a:
-                #    behavior = 'a*'
-                #elif event.key == K_f:
-                #    behavior = 'flee'
-                #elif event.key == K_v:
-                #    behavior = 'avoid'
-                #elif event.key == K_r:
-                #    behavior = 'arrive'
-                #elif event.key == K_1:
-                #    LEVEL = levels.EASY
-                #    level_change = True
-                #elif event.key == K_2:
-                #    LEVEL = levels.MEDIUM
-                #    level_change = True
-                #elif event.key == K_3:
-                #    LEVEL = levels.HARD
-                #    level_change = True
                 elif event.key == K_i:
                     addEnemy()
-        if GAME_STATUS == 'GAME OVER':
-            print 'Game Over Man'
-            break
-
+        '''
         # If level change was indicated.
-        if level_change:
-            world = World(images, LEVEL['level'])
+        #if level_change:
+        #    world = World(images, LEVEL['level'])
 
-            player_pos = np.array(LEVEL['player'])
-            player = Agent(world, images["boy"], player_pos, MAX_PLAYER_SPEED,
-                           LIFE_PLAYER, RATE_PLAYER, DAMAGE_PLAYER)
+        #    player_pos = np.array(LEVEL['player'])
+        #    player = Agent(world, images["boy"], player_pos, MAX_PLAYER_SPEED,
+        #                   LIFE_PLAYER, RATE_PLAYER, DAMAGE_PLAYER)
 
             #enemy_pos = np.array(LEVEL['enemy'])
-            addEnemy()
+        #    addEnemy()
             #enemys.append(Agent(world, images["girl"], enemy_pos,
             #              MAX_ENEMY_SPEED, LIFE_ENEMY, RATE_ENEMY,
             #              DAMAGE_ENEMY, is_npc=True))
 
-            level_change = False
-            pass
+         #   level_change = False
+         #   pass
 
         # Handle movement.
         #pressed_keys = pygame.key.get_pressed()
-
+        '''
         # Compute the vector indicating the acceleration that the
         # player will experience.
         acceleration = np.array([0, 0])
-        '''
-        if pressed_keys[K_LEFT]:
-            acceleration += [-1, 0]
-        elif pressed_keys[K_RIGHT]:
-            acceleration += [1, 0]
-
-        if pressed_keys[K_UP]:
-            acceleration += [0, -1]
-        elif pressed_keys[K_DOWN]:
-            acceleration += [0, 1]
-        '''
         if not np.array_equal(acceleration, [0, 0]):
             # Using /= here breaks. NumPy issue?
             acceleration = acceleration / np.sqrt(
@@ -185,15 +163,28 @@ def main():
         #player.update(acceleration, time_passed_seconds)
         manageStatus(time_passed_seconds)
 
+        refreshBlit()
+
         if enemys.__len__() <= 0:
             addEnemy()
 
-        refreshBlit()
+        if draw_vectors is True and target:
+            if behavior == 'a*':
+                drawLineTile(apath.path, tiles)
+            else:
+                line = [(player.position[0], player.position[1]),
+                        (target.position[0], target.position[1])]
+                drawLinePixel(line, tiles)
+
         # Intermediate buffer to screen.
         screen.blit(tiles, (0, 0))
 
         # Update the display, and loop again!
         pygame.display.update()
+
+        if GAME_STATE == 'gameover':
+            print "You final points: %s" % points
+            break  # Break the gameLooping
 
 
 def restoreLifePlayer():
@@ -224,7 +215,7 @@ def attack(target1, target2, time_passed_seconds):
         the target1 try attack target2 using percent rate_attack
         in last_attack time (1 second) and verify if target's is dead
     '''
-    global target, points, GAME_STATUS
+    global target, points, GAME_STATE
     target1.next_attack -= time_passed_seconds
     damage = False
 
@@ -257,7 +248,7 @@ def attack(target1, target2, time_passed_seconds):
             points += 1
             print 'Enemy elimined'
         else:
-            GAME_STATUS = 'GAME OVER'  # NOQA
+            GAME_STATE = 'gameover'  # NOQA
 
 
 ## manage status for player and enemies
@@ -298,17 +289,9 @@ def manageStatus(time_passed_seconds):
 
     execAction(time_passed_seconds)
 
-    if draw_vectors is True and target:
-        if behavior == 'a*':
-            drawLineTile(apath.path, tiles)
-        else:
-            line = [(player.position[0], player.position[1]),
-                    (target.position[0], target.position[1])]
-            drawLinePixel(line, tiles)
-
 
 def execAction(time_passed_seconds):
-    global action, target
+    global action, target, behavior
     targetBeh = player
 
     if action == 'hunter':
@@ -370,7 +353,7 @@ def addEnemy():
 
 
 def executeAIBehavior(behavior, enemy, player, time_passed_seconds):
-    global apath  # For drawing overlays.
+    global apath, world  # For drawing overlays.
 
     if behavior == 'wander':
         ai.wander(enemy, time_passed_seconds)
@@ -442,7 +425,6 @@ def loadImages():
 # Useful for didactic purposes.
 def drawLineTile(path, tiles):
     global world
-
     to_draw = []
 
     for p in path:
@@ -453,7 +435,6 @@ def drawLineTile(path, tiles):
 
 
 def drawLinePixel(path, tiles):
-    global world
 
     if len(path) >= 2:
         pygame.draw.lines(tiles, (255, 0, 0), False, path, 5)
@@ -528,15 +509,96 @@ def refreshBlit():
         i.blitOn(tiles)
     player.blitOn(tiles)
 
-'''
-def screen(GAME_STATUS):
-    if GAME_STATUS == 'menu':
+
+def aboutScreen():
+    global GAME_STATE
+    print 'About screen not implemented'
+    GAME_STATE = 'menu'
+
+
+def gameOverScreen():
+    global points, GAME_STATE
+
+    background = pygame.image.load("../res/go.jpg")
+    backgroundRect = background.get_rect()
+
+    # Display level, and display behavior.
+    font = pygame.font.Font("../res/Jet Set.ttf", 36)
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                exit()
+        key_press = pygame.key.get_pressed()
+        if key_press[K_SPACE]:
+            GAME_STATE = 'menu'
+            break
+        pygame.event.pump()
+        screen.fill((0, 0, 0))
+        screen.blit(background, backgroundRect)
+
+        text = font.render('You has made %s points' % points,
+                           True, (100, 100, 100))
+        screen.blit(text, (200, 10))
+
+        text = font.render('Press SPACE for continue', True, (100, 100, 100))
+        screen.blit(text, (130, 630))
+
+        pygame.display.update()
+
+
+def menuScreen():
+    global GAME_STATE
+
+    background = pygame.image.load("../res/bc.jpg")
+    backgroundRect = background.get_rect()
+    #font = pygame.font.Font("../res/Jet Set.ttf", 36)
+
+    options = [Option("New Game", (340, 110), 'gameRun', screen),
+               Option("About", (340, 190), 'about', screen),
+               Option("Quit", (340, 280), 'quit', screen)]
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                exit()
+        pygame.event.pump()
+        screen.fill((0, 0, 0))
+        screen.blit(background, backgroundRect)
+
+        for option in options:
+            if option.rect.collidepoint(pygame.mouse.get_pos()):
+                option.hovered = True
+
+                if pygame.mouse.get_pressed() == (1, 0, 0):
+                    option.clicked = True
+                else:
+                    option.clicked = False
+            else:
+                option.hovered = False
+                option.clicked = False
+            option.draw()
+            if option.clicked:
+                GAME_STATE = option.new_window()
+        pygame.display.update()
+        if not GAME_STATE is 'menu':
+            break
+
+
+def screenGame(GAME_STATE):
+    if GAME_STATE == 'menu':
         menuScreen()
-    elif GAME_STATUS == 'game':
-        gameScreen()
-    elif GAME_STATUS == 'gameover':
+    elif GAME_STATE == 'gameRun':
+        loading()
+        gameRun()
+    elif GAME_STATE == 'about':
+        aboutScreen()
+    elif GAME_STATE == 'gameover':
         gameOverScreen()
-'''
+    elif GAME_STATE == 'quit':
+        pygame.quit()
+        exit()
+
 
 if __name__ == '__main__':
     main()
