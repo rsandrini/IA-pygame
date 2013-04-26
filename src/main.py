@@ -47,7 +47,7 @@ def main():
     global enemys
     global tiles, world
     global points
-    global draw_vectors
+    global draw_vectors, draw_lifebar
     global behavior
     global target
     global LEVEL
@@ -65,6 +65,7 @@ def main():
     pygame.time.set_timer(USEREVENT + 1, 2000)
 
     level_change = False  # NOQA
+    draw_lifebar = True
 
     # The main game event loop.
     while True:
@@ -158,6 +159,11 @@ def gameRun():
 
         # Intermediate buffer to screen.
         screen.blit(tiles, (0, 0))
+        # EXTRA DRAW AFTER FUNCTION
+
+        if draw_lifebar:
+            drawLifeBar(screen, int(player.position[0])-25,
+                        int(player.position[1])-100, LIFE_PLAYER, player.life)
 
         if draw_vectors:
             #Draw vision circle in player
@@ -169,8 +175,14 @@ def gameRun():
             #Draw vision circle in enemys
             p = int(MAX_VIEW_ENEMY)
             for i in enemys:
-                pygame.draw.circle(screen, cor, (int(i.position[0]),
-                                                 int(i.position[1])), p, 1)
+                pos = (int(i.position[0]), int(i.position[1]))
+                pygame.draw.circle(screen, cor, pos, p, 1)
+
+        if draw_lifebar:
+            for i in enemys:
+                pos = (int(i.position[0]), int(i.position[1]))
+                #adjust position in head of agent
+                drawLifeBar(screen, pos[0]-25, pos[1]-100, LIFE_ENEMY, i.life)
 
         # Update the display, and loop again!
         pygame.display.update()
@@ -178,6 +190,37 @@ def gameRun():
         if GAME_STATE == 'gameover':
             print "You final points: %s" % points
             break  # Break the gameLooping
+
+
+def drawLifeBar(screen, x, y, life_full, life):
+    try:
+        cor = (128, 128, 128)
+        cor100 = (0, 179, 21)
+        cor75 = (171, 244, 67)
+        cor50 = (241, 223, 18)
+        cor25 = (241, 39, 18)
+
+        # draw border in life bar
+        pygame.draw.rect(screen, cor, pygame.Rect(
+            x, y, 61, 11), 1)
+
+        life_bar_perc = life*100/life_full
+        life_bar = life_bar_perc*60/100
+        if life_bar_perc > 75:
+            cor2 = cor100
+        elif life_bar_perc > 50:
+            cor2 = cor75
+        elif life_bar_perc > 25:
+            cor2 = cor50
+        else:
+            cor2 = cor25
+
+        # draw real life bar
+        pygame.draw.rect(screen, cor2, pygame.Rect(
+            x+1, y+1, int(life_bar), 10), 0)
+
+    except Exception, ex:
+        print ex
 
 
 def restoreLifePlayer():
