@@ -9,7 +9,7 @@ from agent import Agent
 from world import World
 from pygame.locals import *  # NOQA
 from menu import *  # NOQA
-
+from upgrade import Upgrade
 
 # Set these constants before starting the game.
 FPS = 20
@@ -25,7 +25,7 @@ LIFE_ENEMY = 4
 LIFE_PLAYER = 10
 
 RATE_ENEMY = 40
-RATE_PLAYER = 70
+RATE_PLAYER = 80
 
 DAMAGE_PLAYER = 1
 DAMAGE_ENEMY = 1
@@ -55,6 +55,8 @@ def main():
     global world
     global points
     global apath
+    global btnUpgrades
+    global attempts_flee
 
     showDialog = False  # NOQA
     # Startup code
@@ -81,8 +83,8 @@ def main():
 
 def loading():
     global clock, player, behavior, action, world
-    global draw_vectors, level_change
-    global enemys, target, points
+    global draw_vectors, level_change, screen
+    global enemys, target, points, btnUpgrades, attemps_flee
 
     points = 0   # NOQA
     enemys = []
@@ -91,6 +93,20 @@ def loading():
     behavior = 'stop'
     action = 'run'
     draw_vectors = True
+    btnUpgrades = []
+    cost_up = 3
+    attempts_flee = 0  # NOQA
+
+    #Loading Upgrades
+    btnUpgrades.append(Upgrade('Damage', images['icon damage'],
+                               images['icon damage disabled'],
+                               (710, 160), 'damage', 2, cost_up))
+    btnUpgrades.append(Upgrade('Life', images['icon life'],
+                               images['icon life disabled'],
+                               (710, 300), 'life', 2, cost_up))
+    btnUpgrades.append(Upgrade('Vision', images['icon vision'],
+                               images['icon vision disabled'],
+                               (710, 440), 'vision', 50, cost_up))
 
     # The game world.
     world = World(images, LEVEL['level'])
@@ -184,12 +200,52 @@ def gameRun():
                 #adjust position in head of agent
                 drawLifeBar(screen, pos[0]-25, pos[1]-100, LIFE_ENEMY, i.life)
 
+        #Draw icons and logic for upgrades
+        drawUpgrades(screen)
+
         # Update the display, and loop again!
         pygame.display.update()
 
         if GAME_STATE == 'gameover':
             print "You final points: %s" % points
             break  # Break the gameLooping
+
+
+def drawUpgrades(screen):
+    global points
+    # Display level, and display behavior.
+    font = pygame.font.Font("../res/Jet Set.ttf", 14)
+
+    for i in btnUpgrades:
+        if points >= i.cost:
+            icon = i.icon
+        else:
+            icon = i.icon_disabled
+        screen.blit(icon, i.position)
+        text = font.render('%s[%s] :%s' % (i.name, i.upgrade_level, i.cost),
+                           True, (255, 255, 255))
+        screen.blit(text, (i.position[0], i.position[1]+80))
+        if i.rect.collidepoint(pygame.mouse.get_pos()):
+            i.hovered = True
+            if pygame.mouse.get_pressed() == (1, 0, 0):
+                if points > i.cost:
+                    print 'Added upgrade'
+                    addUpgrade(i)
+                    i.up()
+        else:
+            i.hovered = False
+
+
+def addUpgrade(upgrade):
+    global DAMAGE_PLAYER, LIFE_PLAYER, MAX_VIEW_PLAYER
+    global points, player
+    points -= upgrade.cost
+    if upgrade.type_upgrade == 'damage':
+        player.damage += upgrade.bonus
+    elif upgrade.type_upgrade == 'life':
+        LIFE_PLAYER += upgrade.bonus
+    elif upgrade.type_upgrade == 'vision':
+        MAX_VIEW_PLAYER += upgrade.bonus
 
 
 def drawLifeBar(screen, x, y, life_full, life):
@@ -289,7 +345,7 @@ def attack(target1, target2, time_passed_seconds):
 
 ## manage status for player and enemies
 def manageStatus(time_passed_seconds):
-    global target, tiles, behavior, world, action
+    global target, tiles, behavior, world, action, attempts_flee
 
     #enemys
     # This is where the magic happens.
@@ -309,18 +365,23 @@ def manageStatus(time_passed_seconds):
     target = verify_target()
     if target:
         distance = getDistance(player, target)
-        if player.life < 4:
+        if player.life < 4:  # TODO: Create percent life 30%
             action = 'flee'
             if not player.can_move:
-                action = 'run'
+                if attempts_flee > 6:
+                    action = 'attack'
+                else:
+                    action = 'run'
+                    attempts_flee += 1
         elif distance <= 30:
             action = 'attack'
         else:
             action = 'hunter'
     else:
         action = 'stop'
+        attempts_flee = 0
         # Not target
-        if player.life > 9:
+        if player.life == LIFE_PLAYER:
             action = 'run'
 
     execAction(time_passed_seconds)
@@ -438,6 +499,19 @@ def loadImages():
         "tree short": pygame.image.load("../res/Tree Short.png"),
         "speech bubble": pygame.image.load("../res/SpeechBubble.png"),
         "stone block small": pygame.image.load("../res/Stone Block Small.png"),
+
+        "icon damage": pygame.image.load(
+            "../res/Passive-heartofthegladiator.png"),
+        "icon life": pygame.image.load("../res/Passive-trollsblood.png"),
+        "icon vision": pygame.image.load("../res/Passive-blooddrinker.png"),
+
+        "icon damage disabled": pygame.image.load(
+            "../res/Passive-heartofthegladiatorOff.png"),
+        "icon life disabled": pygame.image.load(
+            "../res/Passive-trollsbloodOff.png"),
+        "icon vision disabled": pygame.image.load(
+            "../res/Passive-blooddrinkerOff.png"),
+
     }
 
     # Key
