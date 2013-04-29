@@ -25,5 +25,5 @@ class Upgrade:
         self.rect.topleft = (self.position)
 
     def up(self):
-        self.cost += 2
+        self.cost = self.cost * 2
         self.upgrade_level += 1

@@ -57,6 +57,8 @@ def main():
     global apath
     global btnUpgrades
     global attempts_flee
+    global score
+    global min_enemys
 
     showDialog = False  # NOQA
     # Startup code
@@ -82,31 +84,33 @@ def main():
 
 
 def loading():
-    global clock, player, behavior, action, world
-    global draw_vectors, level_change, screen
+    global clock, player, behavior, action, world, min_enemys
+    global draw_vectors, level_change, screen, score
     global enemys, target, points, btnUpgrades, attemps_flee
 
+    score = 0
     points = 0   # NOQA
     enemys = []
     target = None
     # Default behavior.
     behavior = 'stop'
     action = 'run'
-    draw_vectors = True
+    draw_vectors = False
     btnUpgrades = []
     cost_up = 3
     attempts_flee = 0  # NOQA
+    min_enemys = LEVEL['min_enemys']
 
     #Loading Upgrades
     btnUpgrades.append(Upgrade('Damage', images['icon damage'],
                                images['icon damage disabled'],
-                               (710, 160), 'damage', 2, cost_up))
+                               (715, 160), 'damage', 2, cost_up))
     btnUpgrades.append(Upgrade('Life', images['icon life'],
                                images['icon life disabled'],
-                               (710, 300), 'life', 2, cost_up))
+                               (715, 300), 'life', 2, cost_up))
     btnUpgrades.append(Upgrade('Vision', images['icon vision'],
                                images['icon vision disabled'],
-                               (710, 440), 'vision', 50, cost_up))
+                               (715, 440), 'vision', 50, cost_up))
 
     # The game world.
     world = World(images, LEVEL['level'])
@@ -162,8 +166,8 @@ def gameRun():
 
         refreshBlit()
 
-        if enemys.__len__() <= 0:
-            addEnemy()
+        # manage the number of enemys
+        addEnemy()
 
         if draw_vectors and target:
             if behavior == 'a*':
@@ -207,14 +211,13 @@ def gameRun():
         pygame.display.update()
 
         if GAME_STATE == 'gameover':
-            print "You final points: %s" % points
             break  # Break the gameLooping
 
 
 def drawUpgrades(screen):
     global points
     # Display level, and display behavior.
-    font = pygame.font.Font("../res/Jet Set.ttf", 14)
+    font = pygame.font.Font("../res/Jet Set.ttf", 12)
 
     for i in btnUpgrades:
         if points >= i.cost:
@@ -227,6 +230,7 @@ def drawUpgrades(screen):
         screen.blit(text, (i.position[0], i.position[1]+80))
         if i.rect.collidepoint(pygame.mouse.get_pos()):
             i.hovered = True
+            print 'hovered %s' % i.name
             if pygame.mouse.get_pressed() == (1, 0, 0):
                 if points > i.cost:
                     print 'Added upgrade'
@@ -258,7 +262,7 @@ def drawLifeBar(screen, x, y, life_full, life):
 
         # draw border in life bar
         pygame.draw.rect(screen, cor, pygame.Rect(
-            x, y, 61, 11), 1)
+            x, y, 61, 12), 1)
 
         life_bar_perc = life*100/life_full
         life_bar = life_bar_perc*60/100
@@ -307,7 +311,7 @@ def attack(target1, target2, time_passed_seconds):
         the target1 try attack target2 using percent rate_attack
         in last_attack time (1 second) and verify if target's is dead
     '''
-    global target, points, GAME_STATE
+    global target, points, score, GAME_STATE
     target1.next_attack -= time_passed_seconds
     damage = False
 
@@ -324,12 +328,12 @@ def attack(target1, target2, time_passed_seconds):
 
         if target1.isNonPlayerCharacter:
             if damage:
-                print 'NPC cause damage in player'
+                print 'NPC caused damage in player'
             else:
                 print 'NPC miss'
         else:
             if damage:
-                print 'Player cause damage in NPC'
+                print 'Player caused damage in NPC'
             else:
                 print 'Player miss'
 
@@ -338,6 +342,7 @@ def attack(target1, target2, time_passed_seconds):
             target = None
             enemys.remove(target2)
             points += 1
+            score += 1
             print 'Enemy elimined'
         else:
             GAME_STATE = 'gameover'  # NOQA
@@ -436,17 +441,21 @@ def verify_target():
 
 
 def addEnemy():
-    if enemys.__len__() < MAX_ENEMYS:
-        pos_level = np.array(LEVEL['enemy']).__len__()
-        try:
-            position = LEVEL['enemy'][random.randint(0, pos_level)]
-            enemy_pos = np.array(position)
-        except IndexError:
-            enemy_pos = np.array(LEVEL['enemy'][0])
+    global min_enemys
+    while enemys.__len__() < min_enemys:
+        if enemys.__len__() < MAX_ENEMYS:
+            pos_level = np.array(LEVEL['enemy']).__len__()
+            try:
+                position = LEVEL['enemy'][random.randint(0, pos_level)]
+                enemy_pos = np.array(position)
+            except IndexError:
+                enemy_pos = np.array(LEVEL['enemy'][0])
 
-        enemys.append(Agent(world, 'wander', images["girl"], enemy_pos,
-                      MAX_ENEMY_SPEED, LIFE_ENEMY, RATE_ENEMY,
-                      DAMAGE_ENEMY, is_npc=True))
+            enemys.append(Agent(world, 'wander', images["girl"], enemy_pos,
+                          MAX_ENEMY_SPEED, LIFE_ENEMY, RATE_ENEMY,
+                          DAMAGE_ENEMY, is_npc=True))
+        else:
+            break
 
 
 def executeAIBehavior(behavior, enemy, player, time_passed_seconds):
@@ -609,8 +618,8 @@ def refreshBlit():
     text = font.render(action.upper(), True, (255, 255, 255))
     tiles.blit(text, (400, 0))
 
-    text = font.render(str(points), False, (0, 0, 0))
-    tiles.blit(text, (630, 600))
+    text = font.render('Points: %s' % str(points), False, (0, 0, 0))
+    tiles.blit(text, (520, 600))
 
     text = font.render('Life: %s' % str(player.life), False, (0, 0, 0))
     tiles.blit(text, (0, 600))
@@ -627,7 +636,7 @@ def aboutScreen():
 
 
 def gameOverScreen():
-    global points, GAME_STATE
+    global score, GAME_STATE
 
     background = pygame.image.load("../res/go.jpg")
     backgroundRect = background.get_rect()
@@ -647,7 +656,7 @@ def gameOverScreen():
         screen.fill((0, 0, 0))
         screen.blit(background, backgroundRect)
 
-        text = font.render('You has made %s points' % points,
+        text = font.render('You has made %s points' % score,
                            True, (100, 100, 100))
         screen.blit(text, (200, 10))
 
@@ -658,15 +667,21 @@ def gameOverScreen():
 
 
 def menuScreen():
-    global GAME_STATE
+    global GAME_STATE, LEVEL
 
     background = pygame.image.load("../res/bc.jpg")
     backgroundRect = background.get_rect()
     #font = pygame.font.Font("../res/Jet Set.ttf", 36)
 
-    options = [Option("New Game", (340, 110), 'gameRun', screen),
-               Option("About", (340, 190), 'about', screen),
-               Option("Quit", (340, 280), 'quit', screen)]
+    options = [Option("New Game", (140, 110), 'newGame', screen),
+               Option("About", (140, 190), 'about', screen),
+               Option("Quit", (140, 280), 'quit', screen)]
+    options_level = [Option("New Game", (140, 110), 'newGame', screen),
+                     Option("About", (140, 190), 'about', screen),
+                     Option("Quit", (140, 280), 'quit', screen),
+                     Option("Easy", (350, 80), 'EASY', screen),
+                     Option("Medium", (350, 130), 'MEDIUM', screen),
+                     Option("Hard", (350, 180), 'HARD', screen)]
 
     while True:
         for event in pygame.event.get():
@@ -690,9 +705,25 @@ def menuScreen():
             option.draw()
             if option.clicked:
                 GAME_STATE = option.new_window()
+                go = False
+                if GAME_STATE == 'EASY':
+                    LEVEL = levels.EASY
+                    go = True
+                elif GAME_STATE == 'MEDIUM':
+                    LEVEL = levels.MEDIUM
+                    go = True
+                elif GAME_STATE == 'HARD':
+                    LEVEL = levels.HARD
+                    go = True
+                if go:
+                    GAME_STATE = "gameRun"
+
         pygame.display.update()
         if not GAME_STATE is 'menu':
-            break
+            if GAME_STATE is 'newGame':
+                options = options_level
+            else:
+                break
 
 
 def screenGame(GAME_STATE):

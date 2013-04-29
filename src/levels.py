@@ -8,9 +8,9 @@ EASY = {
         # Column 1
         ['stone block',
          'stone block',
-         'stone block',
-         'stone block',
-         'stone block',
+         'grass block',
+         'grass block',
+         'grass block',
          'stone block',
          'stone block',
          ],
@@ -18,66 +18,67 @@ EASY = {
         # Column 2
         ['stone block',
          'stone block',
-         'stone block',
-         'stone block',
-         'stone block',
-         'stone block',
+         'grass block',
+         'grass block',
+         'water block',
+         'grass block',
          'stone block',
          ],
 
         # Column 3
-        ['stone block',
+        ['dirt block',
+         'grass block',
+         'grass block',
+         'dirt block',
          'stone block',
          'stone block',
-         'stone block',
-         'stone block',
-         'stone block',
-         'stone block',
+         'grass block',
          ],
 
         # Column 4
         ['stone block',
+         'dirt block',
+         'dirt block',
          'stone block',
          'stone block',
-         'stone block',
-         'stone block',
-         'stone block',
-         'stone block',
+         'wall block',
+         'grass block',
          ],
 
         # Column 5
-        ['stone block',
+        ['grass block',
          'stone block',
-         'stone block',
-         'stone block',
-         'stone block',
-         'stone block',
+         'grass block',
+         'ramp block',
+         'dirt block',
+         'dirt block',
          'stone block',
          ],
 
         # Column 6
-        ['stone block',
+        ['grass block',
+         'grass block',
+         'water block',
          'stone block',
          'stone block',
          'stone block',
-         'stone block',
-         'stone block',
-         'stone block',
+         'dirt block',
          ],
 
         # Column 7
-        ['stone block',
+        ['grass block',
+         'grass block',
+         'grass block',
          'stone block',
          'stone block',
-         'stone block',
-         'stone block',
-         'stone block',
+         'ramp block',
          'stone block',
          ]
     ],
 
-    'player': [80, 400],
-    'enemy': [[50, 100], [650, 100], [50, 600], [650, 600]]
+    'player': [300, 400],
+    'enemy': [[50, 100], [650, 100], [50, 600], [650, 600]],
+    'min_enemys': 2
 }
 
 # A hard level, that is, has many obstacles.
@@ -90,7 +91,7 @@ HARD = {
          'grass block',
          'water block',
          'water block',
-         'water block',
+         'stone block',
          'dirt block',
          'dirt block',
          ],
@@ -107,9 +108,9 @@ HARD = {
 
         # Column 3
         ['water block',
+         'grass block',
+         'water block',
          'ramp block',
-         'water block',
-         'water block',
          'dirt block',
          'wall block',
          'dirt block',
@@ -117,8 +118,8 @@ HARD = {
 
         # Column 4
         ['water block',
+         'dirt block',
          'ramp block',
-         'water block',
          'dirt block',
          'dirt block',
          'dirt block',
@@ -129,8 +130,8 @@ HARD = {
         ['stone block',
          'stone block',
          'water block',
-         'water block',
-         'water block',
+         'ramp block',
+         'dirt block',
          'water block',
          'ramp block',
          ],
@@ -139,16 +140,16 @@ HARD = {
         ['stone block',
          'wall block',
          'stone block',
-         'ramp block',
-         'ramp block',
+         'grass block',
+         'dirt block',
          'grass block',
          'grass block',
          ],
 
         # Column 7
-        ['stone block',
-         'stone block',
-         'stone block',
+        ['grass block',
+         'grass block',
+         'dirt block',
          'water block',
          'water block',
          'grass block',
@@ -156,8 +157,9 @@ HARD = {
          ]
     ],
 
-    'player': [80, 500],
-    'enemy': [300, 200]
+    'player': [300, 400],
+    'enemy': [[50, 100], [650, 100], [50, 600], [650, 600]],
+    'min_enemys': 5
 }
 
 # A moderate difficulty level.
@@ -179,17 +181,17 @@ MEDIUM = {
         # Column 2
         ['dirt block',
          'dirt block',
-         'wall block',
+         'dirt block',
          'stone block',
          'stone block',
-         'wall block',
+         'grass block',
          'wall block',
          ],
 
         # Column 3
         ['water block',
          'dirt block',
-         'wall block',
+         'grass block',
          'stone block',
          'stone block',
          'grass block',
@@ -201,23 +203,23 @@ MEDIUM = {
          'ramp block',
          'water block',
          'stone block',
-         'stone block',
-         'grass block',
+         'dirt block',
+         'wall block',
          'grass block',
          ],
 
         # Column 5
-        ['water block',
+        ['dirt block',
          'ramp block',
          'water block',
-         'stone block',
+         'dirt block',
          'stone block',
          'grass block',
          'grass block',
          ],
 
         # Column 6
-        ['water block',
+        ['dirt block',
          'ramp block',
          'ramp block',
          'stone block',
@@ -227,16 +229,17 @@ MEDIUM = {
          ],
 
         # Column 7
-        ['water block',
-         'water block',
-         'water block',
+        ['dirt block',
+         'dirt block',
+         'dirt block',
          'stone block',
          'stone block',
-         'stone block',
+         'grass block',
          'stone block',
          ]
     ],
 
-    'player': [80, 400],
-    'enemy': [300, 200]
+    'player': [300, 400],
+    'enemy': [[50, 100], [650, 100], [50, 600], [650, 600]],
+    'min_enemys': 3
 }
