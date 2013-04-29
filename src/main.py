@@ -64,7 +64,7 @@ def main():
     # Startup code
     pygame.init()
     screen = pygame.display.set_mode((800, 700))
-    pygame.display.set_caption("Majesty 0.1")
+    pygame.display.set_caption("Zombie Zone 0.1")
     images = loadImages()
     pygame.time.set_timer(USEREVENT + 1, 2000)
 
@@ -148,8 +148,6 @@ def gameRun():
                     backgroundMusic()
                 elif event.key == K_d:
                     draw_vectors = not draw_vectors
-                elif event.key == K_i:
-                    addEnemy()
         # Compute the vector indicating the acceleration that the
         # player will experience.
         acceleration = np.array([0, 0])
@@ -230,9 +228,8 @@ def drawUpgrades(screen):
         screen.blit(text, (i.position[0], i.position[1]+80))
         if i.rect.collidepoint(pygame.mouse.get_pos()):
             i.hovered = True
-            print 'hovered %s' % i.name
             if pygame.mouse.get_pressed() == (1, 0, 0):
-                if points > i.cost:
+                if points >= i.cost:
                     print 'Added upgrade'
                     addUpgrade(i)
                     i.up()
@@ -444,6 +441,7 @@ def addEnemy():
     global min_enemys
     while enemys.__len__() < min_enemys:
         if enemys.__len__() < MAX_ENEMYS:
+            sprite = 'girl%s' % (random.randint(1, 3))
             pos_level = np.array(LEVEL['enemy']).__len__()
             try:
                 position = LEVEL['enemy'][random.randint(0, pos_level)]
@@ -451,7 +449,7 @@ def addEnemy():
             except IndexError:
                 enemy_pos = np.array(LEVEL['enemy'][0])
 
-            enemys.append(Agent(world, 'wander', images["girl"], enemy_pos,
+            enemys.append(Agent(world, 'wander', images[sprite], enemy_pos,
                           MAX_ENEMY_SPEED, LIFE_ENEMY, RATE_ENEMY,
                           DAMAGE_ENEMY, is_npc=True))
         else:
@@ -490,7 +488,9 @@ def executeAIBehavior(behavior, enemy, player, time_passed_seconds):
 def loadImages():
     images = {
         "boy": pygame.image.load("../res/Character Boy.png"),
-        "girl": pygame.image.load("../res/Character Pink Girl.png"),
+        "girl1": pygame.image.load("../res/Character Pink Girl.png"),
+        "girl2": pygame.image.load("../res/Character Cat Girl.png"),
+        "girl3": pygame.image.load("../res/Character Horn Girl.png"),
         "enemy": pygame.image.load("../res/Enemy Bug.png"),
         "heart": pygame.image.load("../res/Heart.png"),
         "chest closed": pygame.image.load("../res/Chest Closed.png"),
