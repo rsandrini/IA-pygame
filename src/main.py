@@ -37,7 +37,7 @@ GAME_STATE = 'menu'
 # Audio TRACKS; easy to implement. Get TRACKS at:
 # http://www.nosoapradio.us/
 TRACKS = [
-    "DST-Travel.mp3"
+    "Human_Blood.mp3"
 ]
 
 
@@ -62,9 +62,14 @@ def main():
 
     showDialog = False  # NOQA
     # Startup code
+
+    # setup mixer to avoid sound lag
+    pygame.mixer.pre_init(44100, -16, 2, 2048)
+
     pygame.init()
     screen = pygame.display.set_mode((800, 700))
     pygame.display.set_caption("Zombie Zone 0.1")
+
     images = loadImages()
     pygame.time.set_timer(USEREVENT + 1, 2000)
 
@@ -87,7 +92,16 @@ def loading():
     global clock, player, behavior, action, world, min_enemys
     global draw_vectors, level_change, screen, score
     global enemys, target, points, btnUpgrades, attemps_flee
+    global MAX_VIEW_PLAYER, LIFE_PLAYER, RATE_PLAYER
+    global MAX_VIEW_ENEMY, LIFE_ENEMY, RATE_ENEMY
+    MAX_VIEW_PLAYER = 180
+    MAX_VIEW_ENEMY = 100
 
+    LIFE_ENEMY = 4
+    LIFE_PLAYER = 10
+
+    RATE_ENEMY = 40
+    RATE_PLAYER = 80
     score = 0
     points = 0   # NOQA
     enemys = []
@@ -326,11 +340,13 @@ def attack(target1, target2, time_passed_seconds):
         if target1.isNonPlayerCharacter:
             if damage:
                 print 'NPC caused damage in player'
+                ambientSound('attack')
             else:
                 print 'NPC miss'
         else:
             if damage:
                 print 'Player caused damage in NPC'
+                ambientSound('zombie%s' % random.randint(1, 7))
             else:
                 print 'Player miss'
 
@@ -338,6 +354,7 @@ def attack(target1, target2, time_passed_seconds):
         if target2.isNonPlayerCharacter:
             target = None
             enemys.remove(target2)
+            ambientSound('dead')
             points += 1
             score += 1
             print 'Enemy elimined'
@@ -600,7 +617,42 @@ def backgroundMusic():
         pygame.mixer.music.fadeout(1000)
     else:
         pygame.mixer.music.load("../res/" + random.choice(TRACKS))
+        pygame.mixer.music.set_volume(0.7)
         pygame.mixer.music.play(-1)
+
+
+def introMusic():
+    pygame.mixer.music.load("../res/sounds/introduction.wav")
+    pygame.mixer.music.play(-1)
+
+
+def gameOverMusic():
+    pygame.mixer.music.load("../res/sounds/gameover.wav")
+    pygame.mixer.music.play(-1)
+
+
+def ambientSound(action=None):
+    if action:
+        if action == 'bite':
+            sound = 'bite.wav'
+        elif action == 'dead':
+            sound = 'dead.wav'
+        elif action == 'menu':
+            sound = 'bite.wav'
+        elif action == 'newGame':
+            sound = 'come_here.wav'
+        else:
+            sound = '%s.wav' % action
+
+        cn = pygame.mixer.find_channel()
+        s = pygame.mixer.Sound("../res/sounds/%s" % sound)
+        pygame.mixer.Sound.get_num_channels
+        cn.queue(s)
+    else:
+        if random.randint(1, 10)/2 == 0:
+            s = pygame.mixer.Sound("../res/sounds/zombie%.wav" % (
+                random.randint(1, 7)))
+            s.play()
 
 
 def refreshBlit():
@@ -643,13 +695,13 @@ def gameOverScreen():
 
     # Display level, and display behavior.
     font = pygame.font.Font("../res/Jet Set.ttf", 36)
-
+    gameOverMusic()
     while True:
         for event in pygame.event.get():
             if event.type == QUIT:
                 exit()
         key_press = pygame.key.get_pressed()
-        if key_press[K_SPACE]:
+        if key_press[K_SPACE] or pygame.mouse.get_pressed() == (1, 0, 0):
             GAME_STATE = 'menu'
             break
         pygame.event.pump()
@@ -673,15 +725,15 @@ def menuScreen():
     backgroundRect = background.get_rect()
     #font = pygame.font.Font("../res/Jet Set.ttf", 36)
 
-    options = [Option("New Game", (140, 110), 'newGame', screen),
-               Option("About", (140, 190), 'about', screen),
-               Option("Quit", (140, 280), 'quit', screen)]
-    options_level = [Option("New Game", (140, 110), 'newGame', screen),
-                     Option("About", (140, 190), 'about', screen),
-                     Option("Quit", (140, 280), 'quit', screen),
-                     Option("Easy", (350, 80), 'EASY', screen),
-                     Option("Medium", (350, 130), 'MEDIUM', screen),
-                     Option("Hard", (350, 180), 'HARD', screen)]
+    options = [Option("New Game", (60, 60), 'newGame', screen),
+               Option("About", (400, 60), 'about', screen),
+               Option("Quit", (700, 60), 'quit', screen)]
+    options_level = [Option("New Game", (60, 60), 'newGame', screen),
+                     Option("About", (400, 60), 'about', screen),
+                     Option("Quit", (700, 60), 'quit', screen),
+                     Option("Easy", (70, 120), 'EASY', screen),
+                     Option("Medium", (70, 180), 'MEDIUM', screen),
+                     Option("Hard", (70, 240), 'HARD', screen)]
 
     while True:
         for event in pygame.event.get():
@@ -697,6 +749,7 @@ def menuScreen():
 
                 if pygame.mouse.get_pressed() == (1, 0, 0):
                     option.clicked = True
+                    #ambientSound('menu')
                 else:
                     option.clicked = False
             else:
@@ -716,6 +769,8 @@ def menuScreen():
                     LEVEL = levels.HARD
                     go = True
                 if go:
+                    ambientSound('newGame')
+                    pygame.mixer.music.stop()
                     GAME_STATE = "gameRun"
 
         pygame.display.update()
@@ -728,6 +783,7 @@ def menuScreen():
 
 def screenGame(GAME_STATE):
     if GAME_STATE == 'menu':
+        introMusic()
         menuScreen()
     elif GAME_STATE == 'gameRun':
         loading()
