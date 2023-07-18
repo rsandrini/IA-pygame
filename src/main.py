@@ -244,7 +244,7 @@ def drawUpgrades(screen):
             i.hovered = True
             if pygame.mouse.get_pressed() == (1, 0, 0):
                 if points >= i.cost:
-                    print 'Added upgrade'
+                    print('Added upgrade')
                     addUpgrade(i)
                     i.up()
         else:
@@ -290,15 +290,15 @@ def drawLifeBar(screen, x, y, life_full, life):
         pygame.draw.rect(screen, cor2, pygame.Rect(
             x+1, y+1, int(life_bar), 10), 0)
 
-    except Exception, ex:
-        print ex
+    except Exception as ex:
+        print(ex)
 
 
 def restoreLifePlayer():
     global behavior, player, action
     if behavior == 'stop' and action == 'stop' and player.life < LIFE_PLAYER:
         player.life += 1
-        print 'Restore Life'
+        print('Restore Life')
 
 
 def isDead(target):
@@ -339,16 +339,16 @@ def attack(target1, target2, time_passed_seconds):
 
         if target1.isNonPlayerCharacter:
             if damage:
-                print 'NPC caused damage in player'
+                print('NPC caused damage in player')
                 ambientSound('attack')
             else:
-                print 'NPC miss'
+                print('NPC miss')
         else:
             if damage:
-                print 'Player caused damage in NPC'
+                print('Player caused damage in NPC')
                 ambientSound('zombie%s' % random.randint(1, 7))
             else:
-                print 'Player miss'
+                print('Player miss')
 
     if isDead(target2):
         if target2.isNonPlayerCharacter:
@@ -357,7 +357,7 @@ def attack(target1, target2, time_passed_seconds):
             ambientSound('dead')
             points += 1
             score += 1
-            print 'Enemy elimined'
+            print('Enemy elimined')
         else:
             GAME_STATE = 'gameover'  # NOQA
 
@@ -579,7 +579,7 @@ def drawLinePixel(path, tiles):
 def dialogBox(image, text):
     global screen, tiles, images
 
-    print "Dialog box."
+    print("Dialog box.")
 
     # The mask is used to dim the screen.
     maskSurface = pygame.Surface(tiles.get_size())
@@ -609,7 +609,7 @@ def dialogBox(image, text):
     while pygame.event.wait().type != KEYDOWN:
         pass
 
-    print "Dialog acknowledged."
+    print("Dialog acknowledged.")
 
 
 def backgroundMusic():
@@ -683,7 +683,7 @@ def refreshBlit():
 
 def aboutScreen():
     global GAME_STATE
-    print 'About screen not implemented'
+    print('About screen not implemented')
     GAME_STATE = 'menu'
 
 

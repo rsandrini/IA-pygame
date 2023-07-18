@@ -105,7 +105,7 @@ class World():
         x, y = tileLocation
 
         if x >= len(self.level)  or y >= len(self.level[0]):
-            print "[collideWall] Tile is out of bounds:", x, y
+            print("[collideWall] Tile is out of bounds:", x, y)
             return True
 
         tileType = self.level[x][y]
