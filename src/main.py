@@ -71,7 +71,7 @@ def main():
     pygame.display.set_caption("Zombie Zone 0.1")
 
     images = loadImages()
-    pygame.time.set_timer(USEREVENT + 1, 2000)
+    pygame.time.set_timer(pygame.USEREVENT + 1, 2000)
 
     level_change = False  # NOQA
     draw_lifebar = True
@@ -79,10 +79,10 @@ def main():
     # The main game event loop.
     while True:
         for event in pygame.event.get():
-            if event.type == QUIT:
+            if event.type == pygame.QUIT:
                 exit()
-            elif event.type == KEYDOWN:
-                if event.key == K_ESCAPE:
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
                     exit()
 
         screenGame(GAME_STATE)
@@ -151,16 +151,16 @@ def gameRun():
     # The main game event loop.
     while True:
         for event in pygame.event.get():
-            if event.type == QUIT:
+            if event.type == pygame.QUIT:
                 exit()
             if event.type == USEREVENT + 1:
                 restoreLifePlayer()
-            elif event.type == KEYDOWN:
-                if event.key == K_ESCAPE:
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
                     exit()
-                elif event.key == K_m:
+                elif event.key == pygame.K_m:
                     backgroundMusic()
-                elif event.key == K_d:
+                elif event.key == pygame.K_d:
                     draw_vectors = not draw_vectors
         # Compute the vector indicating the acceleration that the
         # player will experience.
@@ -606,7 +606,7 @@ def dialogBox(image, text):
 
     pygame.display.update()
 
-    while pygame.event.wait().type != KEYDOWN:
+    while pygame.event.wait().type != pygame.KEYDOWN:
         pass
 
     print("Dialog acknowledged.")
@@ -698,10 +698,10 @@ def gameOverScreen():
     gameOverMusic()
     while True:
         for event in pygame.event.get():
-            if event.type == QUIT:
+            if event.type == pygame.QUIT:
                 exit()
         key_press = pygame.key.get_pressed()
-        if key_press[K_SPACE] or pygame.mouse.get_pressed() == (1, 0, 0):
+        if key_press[pygame.K_SPACE] or pygame.mouse.get_pressed() == (1, 0, 0):
             GAME_STATE = 'menu'
             break
         pygame.event.pump()
@@ -737,7 +737,7 @@ def menuScreen():
 
     while True:
         for event in pygame.event.get():
-            if event.type == QUIT:
+            if event.type == pygame.QUIT:
                 exit()
         pygame.event.pump()
         screen.fill((0, 0, 0))
@@ -774,8 +774,8 @@ def menuScreen():
                     GAME_STATE = "gameRun"
 
         pygame.display.update()
-        if not GAME_STATE is 'menu':
-            if GAME_STATE is 'newGame':
+        if GAME_STATE != 'menu':
+            if GAME_STATE == 'newGame':
                 options = options_level
             else:
                 break
